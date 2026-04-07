@@ -116,8 +116,12 @@ static Pass1Entry* find_or_create_candidate(uint32_t can_id, uint8_t byte_offset
 }
 
 void learner_on_frame(uint32_t can_id, uint8_t *data, uint8_t dlc, uint32_t tick_ms) {
-    // Ignorer les trames OBD2
-    if (can_id == 0x7DF || (can_id >= 0x7E8 && can_id <= 0x7EF)) return;
+    // Filtrer OBD2 11-bit ET 29-bit (ISO 15765-4)
+    bool is_obd2 = (can_id == 0x7DF) ||
+                   (can_id >= 0x7E8 && can_id <= 0x7EF) ||
+                   (can_id == 0x18DB33F1UL) ||
+                   (can_id >= 0x18DAF100UL && can_id <= 0x18DAF1FFUL);
+    if (is_obd2) return;
     // Ignorer si pas de speed OBD2 encore
     if (current_obd2_speed == 0 && obd2_max == 0) return;
 
@@ -208,7 +212,12 @@ void learner_pass2_task(uint32_t tick_ms) {
 
 // Appelé pour chaque trame pendant passe 2
 static void pass2_on_frame(uint32_t can_id, uint8_t *data, uint8_t dlc) {
-    if (can_id == 0x7DF || (can_id >= 0x7E8 && can_id <= 0x7EF)) return;
+    // Filtrer OBD2 11-bit ET 29-bit (ISO 15765-4)
+    bool is_obd2 = (can_id == 0x7DF) ||
+                   (can_id >= 0x7E8 && can_id <= 0x7EF) ||
+                   (can_id == 0x18DB33F1UL) ||
+                   (can_id >= 0x18DAF100UL && can_id <= 0x18DAF1FFUL);
+    if (is_obd2) return;
 
     for (uint8_t i = 0; i < pass2_count; i++) {
         Pass2Entry *p = &pass2[i];

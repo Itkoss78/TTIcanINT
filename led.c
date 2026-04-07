@@ -8,13 +8,14 @@ static uint8_t led_state = 0;
 void led_init(void) {
     LED_RED_TRIS   = 0;
     LED_GREEN_TRIS = 0;
-    LED_RED_PIN    = LED_OFF;
-    LED_GREEN_PIN  = LED_OFF;
+    LED_RED_LAT    = LED_OFF;
+    LED_GREEN_LAT  = LED_OFF;
 }
 
 static void set_color(uint8_t red, uint8_t green) {
-    LED_RED_PIN   = red   ? LED_ON : LED_OFF;
-    LED_GREEN_PIN = green ? LED_ON : LED_OFF;
+    // TOUJOURS utiliser LATx pour écriture sur PIC18, jamais PORTx
+    LED_RED_LAT   = red   ? LED_ON : LED_OFF;
+    LED_GREEN_LAT = green ? LED_ON : LED_OFF;
 }
 
 void led_set_pattern(LedPattern pattern) {

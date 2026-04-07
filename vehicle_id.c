@@ -24,30 +24,33 @@ static uint8_t freq_count = 0;
 static uint32_t signature = 0;
 static bool     scan_done = false;
 
-void vehicle_id_scan(uint32_t tick_ms) {
-    if (scan_done) return;
+void vehicle_id_on_frame(CanFrame *frame) {
+    // Filtrer OBD2 11-bit ET 29-bit (ISO 15765-4)
+    bool is_obd2 = (frame->id == 0x7DF) ||
+                   (frame->id >= 0x7E8 && frame->id <= 0x7EF) ||
+                   (frame->id == 0x18DB33F1UL) ||
+                   (frame->id >= 0x18DAF100UL && frame->id <= 0x18DAF1FFUL);
+    if (is_obd2) return;
 
-    CanFrame frame;
-    // Lire toutes les trames disponibles
-    while (can_get_frame(&frame)) {
-        // Ignorer OBD2
-        if (frame.id == 0x7DF || (frame.id >= 0x7E8 && frame.id <= 0x7EF)) continue;
-
-        // Chercher dans table
-        bool found = false;
-        for (uint8_t i = 0; i < freq_count; i++) {
-            if (freq_table[i].id == frame.id) {
-                freq_table[i].count++;
-                found = true;
-                break;
-            }
-        }
-        if (!found && freq_count < FREQ_TABLE_SIZE) {
-            freq_table[freq_count].id    = frame.id;
-            freq_table[freq_count].count = 1;
-            freq_count++;
+    // Chercher dans table
+    bool found = false;
+    for (uint8_t i = 0; i < freq_count; i++) {
+        if (freq_table[i].id == frame->id) {
+            freq_table[i].count++;
+            found = true;
+            break;
         }
     }
+    if (!found && freq_count < FREQ_TABLE_SIZE) {
+        freq_table[freq_count].id    = frame->id;
+        freq_table[freq_count].count = 1;
+        freq_count++;
+    }
+}
+
+void vehicle_id_scan(uint32_t tick_ms) {
+    // Wrapper vide — la réception est gérée par le dispatcher dans main.c
+    (void)tick_ms;
 }
 
 uint32_t vehicle_id_get_signature(void) {

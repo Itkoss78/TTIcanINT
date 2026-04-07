@@ -41,10 +41,22 @@ void can_init(void) {
     // ECAN mode 2 (FIFO étendu)
     ECANCONbits.MDSEL = 0b10;
 
-    // Baud rate : 250kbps @ 24MHz (à ajuster)
-    BRGCON1 = 0x01; // BRP=1, SJW=1
-    BRGCON2 = 0xB8; // PROPSEG=7, PS1=7, SAM=0
-    BRGCON3 = 0x05; // PS2=6
+    // === BAUD RATE CAN ===
+    // Crystal 6MHz + PLL x4 = Fclk 24MHz
+    // Objectif : 500 kbps (standard véhicules modernes)
+    // BRP=1 → Fq = 24MHz / (2*(1+1)) = 6MHz
+    // TQ config : PROPSEG=4, PS1=4, PS2=3 → total 12 TQ
+    // Bitrate = 6MHz / 12 = 500 kbps ✓
+    // Sample point = (1+4+4)/12 = 75% ✓ (recommandé automotive)
+    BRGCON1 = 0x01;  // SJW=1, BRP=1
+    BRGCON2 = 0x9C;  // SAM=1, SEG1PH=4, PRSEG=4  (0b10011100)
+    BRGCON3 = 0x02;  // SEG2PH=3                   (0b00000010)
+
+    // Pour 250 kbps (anciens véhicules) : doubler BRP → BRP=3
+    // BRGCON1 = 0x03;  // SJW=1, BRP=3
+    // BRGCON2 = 0x9C;  // même
+    // BRGCON3 = 0x02;  // même
+    // Bitrate = 24MHz / (2*(3+1)) / 12 = 250 kbps
 
     // Filtres/masques : TOUT accepter (mode promiscuous)
     // Masque 0 = 0x00000000 → tous les bits ignorés → tout passe

@@ -72,7 +72,9 @@ int main(void) {
     uint32_t state_enter_tick = 0;
 
     while (1) {
+        CLRWDT(); // Nourrir le watchdog à chaque itération
         led_update(get_tick());
+        can_rx_task(); // Pousser les trames HW → ring buffer
 
         switch (state) {
 
@@ -119,7 +121,6 @@ int main(void) {
             case STATE_LEARN_PASS1:
                 led_set_pattern(LED_PATTERN_RED_FAST);
                 obd2_task(get_tick());
-                can_rx_task();
                 learner_pass1_task(get_tick());
 
                 if (learner_pass1_done(get_tick(), state_enter_tick)) {
@@ -136,7 +137,6 @@ int main(void) {
             case STATE_LEARN_PASS2:
                 led_set_pattern(LED_PATTERN_ORANGE);
                 obd2_task(get_tick());
-                can_rx_task();
                 learner_pass2_task(get_tick());
 
                 if (learner_pass2_done(get_tick(), state_enter_tick)) {
@@ -159,8 +159,6 @@ int main(void) {
             // ─── PRODUCTION ─────────────────────────────────────────
             case STATE_PRODUCTION:
                 led_set_pattern(LED_PATTERN_GREEN_SOLID);
-                can_rx_task();
-
                 // Lire la vitesse depuis la trame CAN identifiée
                 {
                     CanFrame frame;
@@ -183,6 +181,37 @@ int main(void) {
                     state_enter_tick = get_tick();
                 }
                 break;
+        }
+
+        // === DISPATCHER UNIQUE — lire une fois, distribuer à tous ===
+        {
+            CanFrame frame;
+            while (can_get_frame(&frame)) {
+                switch (state) {
+                    case STATE_SCAN_VEHICLE:
+                        vehicle_id_on_frame(&frame);
+                        obd2_on_frame(&frame);
+                        break;
+
+                    case STATE_LEARN_PASS1:
+                    case STATE_LEARN_PASS2:
+                        obd2_on_frame(&frame);
+                        learner_on_frame(frame.id, frame.data, frame.dlc, frame.timestamp);
+                        if ((frame.id & 0x7F8) == 0x7E8) {
+                            if (frame.data[0] == 0x03 && frame.data[1] == 0x41 && frame.data[2] == 0x0D) {
+                                learner_on_obd2_speed(frame.data[3], frame.timestamp);
+                            }
+                        }
+                        break;
+
+                    case STATE_PRODUCTION:
+                        // En production : ne garder que l'ID vitesse → déjà géré par can_get_speed_frame()
+                        break;
+
+                    default:
+                        break;
+                }
+            }
         }
     }
     return 0;
