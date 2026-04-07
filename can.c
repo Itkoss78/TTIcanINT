@@ -42,21 +42,28 @@ void can_init(void) {
     ECANCONbits.MDSEL = 0b10;
 
     // === BAUD RATE CAN ===
+    // ⚠️  BITRATE FIXÉ À LA COMPILATION — pas d'auto-détection possible
+    //     (ECAN PIC18F46K80 sans auto-baud, contraintes RAM/ISR respectées)
+    //     Activer UN SEUL bloc selon le véhicule cible.
+    //
     // Crystal 6MHz + PLL x4 = Fclk 24MHz
-    // Objectif : 500 kbps (standard véhicules modernes)
-    // BRP=1 → Fq = 24MHz / (2*(1+1)) = 6MHz
-    // TQ config : PROPSEG=4, PS1=4, PS2=3 → total 12 TQ
-    // Bitrate = 6MHz / 12 = 500 kbps ✓
-    // Sample point = (1+4+4)/12 = 75% ✓ (recommandé automotive)
-    BRGCON1 = 0x01;  // SJW=1, BRP=1
-    BRGCON2 = 0x9C;  // SAM=1, SEG1PH=4, PRSEG=4  (0b10011100)
-    BRGCON3 = 0x02;  // SEG2PH=3                   (0b00000010)
+    // TQ fixe : PROPSEG=4, PS1=4, PS2=3 → 12 TQ, sample point 75%
+    // Bitrate = Fclk / (2*(BRP+1)) / 12
 
-    // Pour 250 kbps (anciens véhicules) : doubler BRP → BRP=3
-    // BRGCON1 = 0x03;  // SJW=1, BRP=3
-    // BRGCON2 = 0x9C;  // même
-    // BRGCON3 = 0x02;  // même
-    // Bitrate = 24MHz / (2*(3+1)) / 12 = 250 kbps
+    // --- 500 kbps (voitures post-2008, OBD2 standard) ---
+    BRGCON1 = 0x01;  // BRP=1 → Fq=6MHz → 6MHz/12=500kbps
+    BRGCON2 = 0x9C;  // SAM=1, SEG1PH=4, PRSEG=4
+    BRGCON3 = 0x02;  // SEG2PH=3
+
+    // --- 250 kbps (anciens véhicules, J1939 camions) ---
+    // BRGCON1 = 0x03;  // BRP=3 → Fq=3MHz → 3MHz/12=250kbps
+    // BRGCON2 = 0x9C;
+    // BRGCON3 = 0x02;
+
+    // --- 125 kbps (très anciens, bus/carrossiers) ---
+    // BRGCON1 = 0x07;  // BRP=7 → Fq=1.5MHz → 1.5MHz/12=125kbps
+    // BRGCON2 = 0x9C;
+    // BRGCON3 = 0x02;
 
     // Filtres/masques : TOUT accepter (mode promiscuous)
     // Masque 0 = 0x00000000 → tous les bits ignorés → tout passe

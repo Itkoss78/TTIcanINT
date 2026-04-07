@@ -57,15 +57,22 @@ Les pins RA0 / RA1 dans `config.h` sont des **placeholders**. Avant de flasher :
 
 ### Bitrate CAN
 
-Configuré par défaut à **500 kbps** dans `can.c` :
+> ⚠️ **Le bitrate est fixé à la compilation.** Le PIC18F46K80 ECAN n'a pas
+> d'auto-baud hardware, et une détection logicielle (essais successifs) est
+> incompatible avec les contraintes du projet (pas de malloc, 3.6 KB RAM,
+> ISR légère). **Il faut connaître le bitrate du véhicule cible avant de flasher.**
 
-```c
-BRGCON1 = 0x01;  // BRP=1
-BRGCON2 = 0x9C;  // PROPSEG=4, PS1=4
-BRGCON3 = 0x02;  // PS2=3  → 6 MHz / 12 TQ = 500 kbps
-```
+Réglage dans `can.c` (modifier les valeurs BRGCON) :
 
-Pour passer à **250 kbps** (anciens véhicules) : remplacer `BRGCON1 = 0x03` (lignes commentées déjà présentes dans `can.c`).
+| Bitrate | BRGCON1 | BRGCON2 | BRGCON3 | Véhicules typiques |
+|---------|---------|---------|---------|-------------------|
+| **500 kbps** | `0x01` | `0x9C` | `0x02` | Voitures post-2008, OBD2 standard |
+| **250 kbps** | `0x03` | `0x9C` | `0x02` | Anciens véhicules, J1939 camions |
+| **125 kbps** | `0x07` | `0x9C` | `0x02` | Très anciens, bus/carrossiers |
+
+> Calcul : crystal 6 MHz × PLL×4 = 24 MHz. BRP=n → Fq = 24 / (2×(n+1)) MHz. 12 TQ fixes.
+
+Les trois jeux de valeurs sont déjà présents en commentaires dans `can.c` — il suffit d'activer le bon bloc.
 
 ---
 
