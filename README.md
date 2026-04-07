@@ -62,25 +62,39 @@ diffère → EEPROM effacée → apprentissage relancé. Aucune intervention req
 - Signature véhicule (fingerprint 4 bytes)
 - CRC intégrité
 
-## Notes développement
+## Architecture firmware
+
+### Dispatcher centralisé
+`can_rx_task()` pousse les trames dans le ring buffer. Un seul `can_get_frame()`
+dans la boucle principale distribue en fan-out selon l'état actif :
+
+| État | Destinataires |
+|------|---------------|
+| `SCAN_VEHICLE` | `vehicle_id_on_frame` + `obd2_on_frame` |
+| `LEARN_PASS1/2` | `obd2_on_frame` + `learner_on_frame` + injection vitesse |
+| `PRODUCTION` | `can_get_speed_frame` sur l'ID sauvegardé |
 
 ### Bitrate CAN
-Le firmware est configuré pour **250 kbps** avec crystal 6MHz + PLL x4.
-Pour 500 kbps (standard moderne), ajuster BRGCON1/2/3 dans `can.c`.
-Certains véhicules utilisent 125kbps (anciens) ou 1Mbps (récents).
+Configuré à **500 kbps** (standard véhicules modernes) :
+`BRGCON1=0x01`, `BRGCON2=0x9C`, `BRGCON3=0x02` — 6 MHz / 12 TQ, sample point 75 %.
+Pour **250 kbps** (anciens véhicules) : commenter BRP=1 et décommenter BRP=3 dans `can.c`.
 
-### Pins LED D3
-À confirmer sur le schéma réel : les pins RA0/RA1 sont des placeholders.
-Vérifier le routage PCB pour les pins exactes de D3 (commune anode).
+### Filtre OBD2
+Trames OBD2 exclues de l'apprentissage en 11-bit **et** 29-bit (ISO 15765-4) :
+- `0x7DF` / `0x7E8–0x7EF` (11-bit standard)
+- `0x18DB33F1` / `0x18DAF100–0x18DAF1FF` (29-bit étendu)
 
-### OBD2 partage de trame
-Le ring buffer CAN est partagé entre `obd2_task` et `learner_on_frame`.
-Actuellement, `vehicle_id_scan` consomme les trames pendant le scan.
-Pour les passes d'apprentissage, refactoriser en dispatcher depuis `main`.
+### LED D3 — anode commune
+Logique inversée : `LOW = LED ON`, `HIGH = LED OFF`.  
+Pins par défaut : RA0 (rouge cathode), RA1 (vert cathode) — **à confirmer dans le schéma Protel avant flash**.  
+Un `#warning` de compilation rappelle la vérification.
 
-## TODO
-- [ ] Dispatcher centralisé (une seule lecture ring buffer → fan-out)
-- [ ] Support 29-bit extended CAN IDs
-- [ ] Watchdog timer activation
+### Watchdog Timer
+Activé avec période ~2 s (`WDTPS=32768`). `CLRWDT()` appelé à chaque itération
+de la boucle principale — un freeze firmware déclenche un reset propre.
+
+## TODO restant
+- [ ] Confirmer pins LED D3 dans Protel/Altium (PCB3071-4.Sch) et définir `LED_RED_PIN_CONFIRMED` / `LED_GREEN_PIN_CONFIRMED`
 - [ ] Test sur banc CAN simulé
-- [ ] Calibration bitrate par véhicule
+- [ ] Calibration bitrate par véhicule (125 / 250 / 500 kbps / 1 Mbps)
+- [ ] Implémenter la sortie vitesse (UART tachygraphe, PWM ou fréquence W)
