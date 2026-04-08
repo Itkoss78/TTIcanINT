@@ -67,6 +67,10 @@ static uint8_t  obd2_max = 0;
 // Résultat final
 static VehicleConfig result;
 static bool          result_valid = false;
+static bool          pass2_active = false; // true quand passe 2 initialisée
+
+// Forward declaration (défini plus bas)
+static void pass2_on_frame(uint32_t can_id, uint8_t *data, uint8_t dlc);
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
@@ -79,6 +83,7 @@ void learner_init(void) {
     obd2_min = 255;
     obd2_max = 0;
     result_valid = false;
+    pass2_active = false;
 }
 
 // ─── FEED OBD2 ────────────────────────────────────────────────────────────────
@@ -145,6 +150,11 @@ void learner_on_frame(uint32_t can_id, uint8_t *data, uint8_t dlc, uint32_t tick
 
         e->last_obd2_speed = current_obd2_speed;
     }
+
+    // Si passe 2 active, accumuler aussi pour la corrélation Pearson
+    if (pass2_active) {
+        pass2_on_frame(can_id, data, dlc);
+    }
 }
 
 void learner_pass1_task(uint32_t tick_ms) {
@@ -202,10 +212,9 @@ static void init_pass2(void) {
 }
 
 void learner_pass2_task(uint32_t tick_ms) {
-    static bool initialized = false;
-    if (!initialized) {
+    if (!pass2_active) {
         init_pass2();
-        initialized = true;
+        pass2_active = true;
     }
     (void)tick_ms;
 }
@@ -306,8 +315,10 @@ bool learner_pass2_done(uint32_t tick_ms, uint32_t start_tick) {
     // factor = mean(obd2) / mean(byte) en Q8
     if (best->sum_x > 0) {
         // mean_x = sum_x / n, mean_y = sum_y / n
-        // factor = mean_y / mean_x * 256
-        best->factor = (uint8_t)((best->sum_y * 256) / best->sum_x);
+        // factor = mean_y / mean_x * 256 (Q8)
+        // Clipper à 255 max pour tenir dans uint8_t
+        uint32_t f = (uint32_t)(best->sum_y * 256) / (uint32_t)best->sum_x;
+        best->factor = (f > 255) ? 255 : (uint8_t)f;
     }
 
     result.can_id      = best->can_id;

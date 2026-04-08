@@ -16,3 +16,11 @@ nbproject/private/
 # XC8 temporaires
 *.cmf
 *.hxl
+
+# Tests binaires compilés
+tests/test_can
+tests/test_vehicle_id
+tests/test_eeprom
+tests/test_obd2
+tests/test_learner
+tests/xc_stub.o
