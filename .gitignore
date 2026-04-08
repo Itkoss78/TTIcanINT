@@ -1,0 +1,18 @@
+# IDE / VS Code
+.vscode/
+
+# MPLAB X build outputs
+build/
+dist/
+nbproject/private/
+*.X.startup
+*.d
+*.p1
+*.pre
+*.elf
+*.hex
+*.map
+
+# XC8 temporaires
+*.cmf
+*.hxl
