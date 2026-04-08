@@ -1,6 +1,8 @@
 # TTICANINT6 Universal Firmware
 **Trusted Technology Instruments** — PCB3071-4
 
+> Copyright © 2026 Itsik H. — Tous droits réservés.
+
 ## Concept
 Boîtier universel de lecture vitesse CAN natif avec phase d'apprentissage automatique.
 Élimine le besoin d'une variante firmware par constructeur.
@@ -93,8 +95,49 @@ Un `#warning` de compilation rappelle la vérification.
 Activé avec période ~2 s (`WDTPS=32768`). `CLRWDT()` appelé à chaque itération
 de la boucle principale — un freeze firmware déclenche un reset propre.
 
+## Tests unitaires
+
+Suite de tests host (gcc/clang, macOS/Linux) — aucune dépendance, pas de XC8 requis.
+
+```
+cd tests && make run
+```
+
+### Résultats — 46 / 46 PASS ✅
+
+| Suite | Tests | Couverture |
+|-------|------:|------------|
+| `test_can` | 9 / 9 ✅ | Ring buffer FIFO, overflow, `can_get_speed_frame` |
+| `test_vehicle_id` | 13 / 13 ✅ | Filtrage OBD2 11+29-bit, fréquences, signature XOR top-5 |
+| `test_eeprom` | 9 / 9 ✅ | CRC-8, round-trip encode/decode, magic byte, corruption |
+| `test_obd2` | 14 / 14 ✅ | Parsing PID 0x0D, IDs/DLC ignorés, timing `obd2_task` |
+| `test_learner` | 11 / 11 ✅ | Filtre OBD2, pass1 durée/variation, pass2 corrélation Pearson |
+| **Total** | **46 / 46** | |
+
+### Bugs firmware corrigés par les tests
+
+| Fichier | Bug | Correction |
+|---------|-----|------------|
+| `learner.c` | `pass2_on_frame()` définie mais jamais appelée → passe 2 n'accumulait aucune donnée | Ajout flag `pass2_active`, appel dans `learner_on_frame()` |
+| `learner.c` | `(uint8_t)(factor * 256)` déborde à 0 pour un ratio 1:1 (256 → 0 en uint8) | Clip à 255 via `uint32_t` intermédiaire |
+
 ## TODO restant
 - [ ] Confirmer pins LED D3 dans Protel/Altium (PCB3071-4.Sch) et définir `LED_RED_PIN_CONFIRMED` / `LED_GREEN_PIN_CONFIRMED`
 - [ ] Test sur banc CAN simulé
 - [ ] Calibration bitrate par véhicule (125 / 250 / 500 kbps / 1 Mbps)
 - [ ] Implémenter la sortie vitesse (UART tachygraphe, PWM ou fréquence W)
+
+---
+
+## Licence
+
+Copyright © 2026 **Itsik H.**  
+Tous droits réservés.
+
+Ce logiciel et le code source associé sont la propriété exclusive d'Itsik H.
+Toute reproduction, distribution, modification ou utilisation, en tout ou en partie,
+sans l'autorisation écrite préalable du propriétaire est strictement interdite.
+
+---
+
+*Firmware développé et maintenu par **Itsik H.***
