@@ -121,9 +121,6 @@ cd tests && make run
 | `learner.c` | `pass2_on_frame()` définie mais jamais appelée → passe 2 n'accumulait aucune donnée | Ajout flag `pass2_active`, appel dans `learner_on_frame()` |
 | `learner.c` | `(uint8_t)(factor * 256)` déborde à 0 pour un ratio 1:1 (256 → 0 en uint8) | Clip à 255 via `uint32_t` intermédiaire |
 
-## TODO restant
-- [ ] Bitrate fixé à **500 kbps** — véhicules modernes uniquement
-
 ---
 
 ## Licence
