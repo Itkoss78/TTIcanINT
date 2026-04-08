@@ -122,10 +122,7 @@ cd tests && make run
 | `learner.c` | `(uint8_t)(factor * 256)` déborde à 0 pour un ratio 1:1 (256 → 0 en uint8) | Clip à 255 via `uint32_t` intermédiaire |
 
 ## TODO restant
-- [ ] Confirmer pins LED D3 dans Protel/Altium (PCB3071-4.Sch) et définir `LED_RED_PIN_CONFIRMED` / `LED_GREEN_PIN_CONFIRMED`
-- [ ] Test sur banc CAN simulé
-- [ ] Calibration bitrate par véhicule (125 / 250 / 500 kbps / 1 Mbps)
-- [ ] Implémenter la sortie vitesse (UART tachygraphe, PWM ou fréquence W)
+- [ ] Bitrate fixé à **500 kbps** — véhicules modernes uniquement
 
 ---
 
