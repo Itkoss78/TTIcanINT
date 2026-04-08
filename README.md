@@ -1,5 +1,5 @@
-# CANM8 Universal Firmware
-**True Chainers** — PCB3071-4
+# TTICANINT6 Universal Firmware
+**Trusted Technology Instruments** — PCB3071-4
 
 ## Concept
 Boîtier universel de lecture vitesse CAN natif avec phase d'apprentissage automatique.
