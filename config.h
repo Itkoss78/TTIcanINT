@@ -68,22 +68,28 @@
 
 // ─── LED D3 — ANODE COMMUNE (commune → VCC 5V) ───────────────────────────────
 // Cathode → pin PIC → LOW = LED allumée, HIGH = LED éteinte
-#define LED_ON  0   // Cathode à GND → LED ON  ✓
-#define LED_OFF 1   // Cathode à VCC → LED OFF ✓
+// PCB3071-4 : cathode rouge → R15 1K → RB5, cathode verte → R14 1K → RB4
+#define LED_ON  0   // Cathode à GND → LED ON
+#define LED_OFF 1   // Cathode à VCC → LED OFF
 
-// ⚠️ PINS À CONFIRMER dans Protel/Altium avant de flasher
-// Valeurs par défaut : RA0 (cathode rouge), RA1 (cathode verte)
-// Ouvrir PCB3071-4.Sch dans Altium/Protel et tracer les nets cathode de D3
-#ifndef LED_RED_PIN_CONFIRMED
-#warning "TODO HARDWARE: Confirmer pin cathode rouge de D3 dans le schema Protel"
-#endif
-#ifndef LED_GREEN_PIN_CONFIRMED
-#warning "TODO HARDWARE: Confirmer pin cathode verte de D3 dans le schema Protel"
-#endif
+#define LED_RED_TRIS    TRISBbits.TRISB5   // PCB3071-4 confirmé
+#define LED_GREEN_TRIS  TRISBbits.TRISB4   // PCB3071-4 confirmé
+#define LED_RED_LAT     LATBbits.LATB5     // TOUJOURS LATx, jamais PORTx
+#define LED_GREEN_LAT   LATBbits.LATB4     // TOUJOURS LATx, jamais PORTx
 
-#define LED_RED_TRIS    TRISAbits.TRISA0   // A confirmer
-#define LED_GREEN_TRIS  TRISAbits.TRISA1   // A confirmer
-#define LED_RED_LAT     LATAbits.LATA0     // A confirmer — TOUJOURS LATx, jamais PORTx
-#define LED_GREEN_LAT   LATAbits.LATA1     // A confirmer — TOUJOURS LATx, jamais PORTx
+// ─── SIGNAL W — SORTIE VITESSE (J2 broche 3) ─────────────────────────────────
+// PCB3071-4 : RD4 → R11 4.7K → Base T5 (BC817 NPN) → J2-3
+// RD4 HIGH = T5 saturé = J2 BAS ; RD4 LOW = T5 bloqué = J2 HAUT
+#define SIGNAL_W_TRIS   TRISDbits.TRISD4   // TOUJOURS TRISx
+#define SIGNAL_W_LAT    LATDbits.LATD4     // TOUJOURS LATx, jamais PORTx
+
+// Mode fréquence — source : canm8.com/cannect-pulse
+// 1 Hz/MPH standard (taximetres, chronotachygraphes)
+#define SIGNAL_W_MODE_1HZ   1
+#define SIGNAL_W_MODE_4HZ   4
+#define SIGNAL_W_MODE_10HZ  10
+#ifndef SIGNAL_W_MODE
+#define SIGNAL_W_MODE       SIGNAL_W_MODE_1HZ   // ← changer ici selon équipement
+#endif
 
 #endif /* CONFIG_H */

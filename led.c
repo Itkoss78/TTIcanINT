@@ -28,47 +28,47 @@ void led_update(uint32_t tick_ms) {
     switch (current_pattern) {
 
         case LED_PATTERN_BOOT:
-            // Orange clignotant rapide 100ms
-            if (elapsed >= 100) {
+            /* Orange clignotant 200ms — démarrage */
+            if (elapsed >= 200) {
                 led_state ^= 1;
-                if (led_state) set_color(1, 1); // Orange
-                else           set_color(0, 0); // Off
+                if (led_state) set_color(1, 1); /* Orange = rouge+vert */
+                else           set_color(0, 0); /* Off */
                 last_toggle = tick_ms;
             }
             break;
 
-        case LED_PATTERN_RED_SLOW:
-            // Rouge clignotant lent 500ms
+        case LED_PATTERN_SEARCHING:
+            /* Rouge clignotant 500ms — "Searching for CAN information" */
             if (elapsed >= 500) {
                 led_state ^= 1;
-                if (led_state) set_color(1, 0); // Rouge
-                else           set_color(0, 0); // Off
+                if (led_state) set_color(1, 0); /* Rouge */
+                else           set_color(0, 0); /* Off */
                 last_toggle = tick_ms;
             }
             break;
 
-        case LED_PATTERN_RED_FAST:
-            // Rouge clignotant rapide 150ms
-            if (elapsed >= 150) {
-                led_state ^= 1;
-                if (led_state) set_color(1, 0); // Rouge
-                else           set_color(0, 0); // Off
-                last_toggle = tick_ms;
-            }
+        case LED_PATTERN_IDENTIFIED:
+            /* Rouge FIXE — "CAN received, vehicle not yet identified" */
+            set_color(1, 0);
             break;
 
-        case LED_PATTERN_ORANGE:
-            // Orange fixe (rouge + vert simultané)
-            set_color(1, 1);
-            break;
-
-        case LED_PATTERN_GREEN_SOLID:
-            // Vert fixe
+        case LED_PATTERN_RECOGNISED:
+            /* Vert FIXE — "Vehicle type recognised" */
             set_color(0, 1);
             break;
 
-        case LED_PATTERN_RED_SOLID:
-            // Rouge fixe
+        case LED_PATTERN_SPEED_DETECTED:
+            /* Vert clignotant 500ms — "Vehicle speed detected" */
+            if (elapsed >= 500) {
+                led_state ^= 1;
+                if (led_state) set_color(0, 1); /* Vert */
+                else           set_color(0, 0); /* Off */
+                last_toggle = tick_ms;
+            }
+            break;
+
+        case LED_PATTERN_ERROR:
+            /* Rouge FIXE */
             set_color(1, 0);
             break;
     }

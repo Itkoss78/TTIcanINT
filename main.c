@@ -15,6 +15,7 @@
 #include "obd2.h"
 #include "learner.h"
 #include "eeprom.h"
+#include "signal_w.h"
 #include "vehicle_id.h"
 
 // === MACHINE À ÉTATS PRINCIPALE ===
@@ -62,6 +63,7 @@ void system_init(void) {
     led_init();
     can_init();
     eeprom_init();
+    signal_w_init();
 }
 
 int main(void) {
@@ -95,7 +97,7 @@ int main(void) {
 
             // ─── SCAN VÉHICULE (10 secondes) ────────────────────────
             case STATE_SCAN_VEHICLE:
-                led_set_pattern(LED_PATTERN_RED_SLOW);
+                led_set_pattern(LED_PATTERN_SEARCHING);
                 vehicle_id_scan(get_tick());
 
                 if (get_tick() - state_enter_tick > SCAN_DURATION_MS) {
@@ -119,7 +121,7 @@ int main(void) {
 
             // ─── PASSE 1 : FILTRAGE GROSSIER (30 secondes) ──────────
             case STATE_LEARN_PASS1:
-                led_set_pattern(LED_PATTERN_RED_FAST);
+                led_set_pattern(LED_PATTERN_IDENTIFIED);
                 obd2_task(get_tick());
                 learner_pass1_task(get_tick());
 
@@ -135,7 +137,7 @@ int main(void) {
 
             // ─── PASSE 2 : CORRÉLATION PRÉCISE (30 secondes) ────────
             case STATE_LEARN_PASS2:
-                led_set_pattern(LED_PATTERN_ORANGE);
+                led_set_pattern(LED_PATTERN_IDENTIFIED);
                 obd2_task(get_tick());
                 learner_pass2_task(get_tick());
 
@@ -148,6 +150,17 @@ int main(void) {
                         eep.speed_factor       = cfg.factor;
                         eep.vehicle_signature  = vehicle_id_get_signature();
                         eeprom_write(&eep);
+
+                        /* Flash vert fixe 2s : "Vehicle type recognised" */
+                        led_set_pattern(LED_PATTERN_RECOGNISED);
+                        {
+                            uint32_t t = get_tick();
+                            while (get_tick() - t < 2000UL) {
+                                CLRWDT();
+                                led_update(get_tick());
+                            }
+                        }
+
                         state = STATE_PRODUCTION;
                     } else {
                         state = STATE_ERROR;
@@ -158,22 +171,22 @@ int main(void) {
 
             // ─── PRODUCTION ─────────────────────────────────────────
             case STATE_PRODUCTION:
-                led_set_pattern(LED_PATTERN_GREEN_SOLID);
-                // Lire la vitesse depuis la trame CAN identifiée
+                led_set_pattern(LED_PATTERN_SPEED_DETECTED);
                 {
                     CanFrame frame;
                     if (can_get_speed_frame(&frame, cfg.can_id)) {
                         uint8_t raw = frame.data[cfg.byte_offset];
-                        uint8_t speed_kmh = (uint8_t)((raw * cfg.factor) >> 8);
-                        // TODO: transmettre la vitesse (UART, PWM, etc.)
-                        (void)speed_kmh;
+                        uint8_t speed_kmh = (uint8_t)(((uint16_t)raw * cfg.factor) >> 8);
+                        signal_w_set_speed(speed_kmh);
                     }
+                    signal_w_task(get_tick());
                 }
                 break;
 
             // ─── ERREUR ─────────────────────────────────────────────
             case STATE_ERROR:
-                led_set_pattern(LED_PATTERN_RED_SOLID);
+                led_set_pattern(LED_PATTERN_ERROR);
+                signal_w_stop();
                 // Attendre 5s puis retenter
                 if (get_tick() - state_enter_tick > 5000) {
                     learner_init();

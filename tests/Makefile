@@ -16,7 +16,7 @@ CFLAGS  = -std=c99 -Wall -Wextra -Wpedantic \
 # Objet stub commun à tous les exécutables
 STUB    = xc_stub.o
 
-TESTS   = test_can test_vehicle_id test_eeprom test_obd2 test_learner
+TESTS   = test_can test_vehicle_id test_eeprom test_obd2 test_learner test_signal_w
 
 .PHONY: all clean run
 
@@ -40,6 +40,9 @@ test_obd2: test_obd2.c $(STUB)
 	$(CC) $(CFLAGS) $< $(STUB) -o $@
 
 test_learner: test_learner.c $(STUB)
+	$(CC) $(CFLAGS) $< $(STUB) -o $@
+
+test_signal_w: test_signal_w.c $(STUB)
 	$(CC) $(CFLAGS) $< $(STUB) -o $@
 
 run: all

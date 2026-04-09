@@ -4,12 +4,12 @@
 #include <stdint.h>
 
 typedef enum {
-    LED_PATTERN_BOOT,
-    LED_PATTERN_RED_SLOW,
-    LED_PATTERN_RED_FAST,
-    LED_PATTERN_ORANGE,
-    LED_PATTERN_GREEN_SOLID,
-    LED_PATTERN_RED_SOLID
+    LED_PATTERN_BOOT,            /* Orange clignotant 200ms — démarrage interne            */
+    LED_PATTERN_SEARCHING,       /* Rouge clignotant 500ms  — Searching for CAN            */
+    LED_PATTERN_IDENTIFIED,      /* Rouge FIXE              — CAN reçu, véhicule non identifié */
+    LED_PATTERN_RECOGNISED,      /* Vert FIXE               — Véhicule reconnu (transition)  */
+    LED_PATTERN_SPEED_DETECTED,  /* Vert clignotant 500ms   — Vitesse détectée (production)  */
+    LED_PATTERN_ERROR            /* Rouge FIXE              — Erreur (même rendu que IDENTIFIED) */
 } LedPattern;
 
 void led_init(void);

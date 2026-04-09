@@ -18,6 +18,9 @@ volatile TRISA_t   TRISAbits   = {0};
 volatile LATA_t    LATAbits    = {0};
 volatile TRISC_t   TRISCbits   = {0};
 volatile TRISB_t   TRISBbits   = {0};
+volatile LATB_t    LATBbits    = {0};
+volatile TRISD_t   TRISDbits   = {0};
+volatile LATD_t    LATDbits    = {0};
 
 volatile uint8_t T0CON=0, TMR0H=0, TMR0L=0;
 volatile uint8_t CANCON=0, CANSTAT=0;

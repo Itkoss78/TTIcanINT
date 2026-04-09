@@ -13,16 +13,14 @@ Boîtier universel de lecture vitesse CAN natif avec phase d'apprentissage autom
 - LED RGB : D3 (commune anode)
 - EEPROM interne : 1KB
 
-## États LED
+## États LED — identiques au CANM8 CANNECT PULSE original
 
-| Pattern          | Signification                              |
-|------------------|--------------------------------------------|
-| Orange clignotant rapide | Boot / initialisation              |
-| Rouge lent (500ms)      | Scan véhicule (10s)                |
-| Rouge rapide (150ms)    | **Passe 1** — Accélérer et freiner ! |
-| Orange fixe             | **Passe 2** — Corrélation en cours  |
-| Vert fixe               | ✅ Trouvé — Mode production          |
-| Rouge fixe              | ❌ Échec — Nouveau essai dans 5s    |
+| LED | Signification |
+|-----|---------------|
+| 🔴 Rouge clignotant | Recherche du signal CAN (scan véhicule 10s) |
+| 🔴 Rouge fixe | CAN détecté — véhicule non encore identifié (apprentissage) |
+| 🟢 Vert fixe | Véhicule reconnu — configuration sauvegardée |
+| 🟢 Vert clignotant | Vitesse détectée — mode production actif |
 
 ## Flow automatique
 
@@ -88,8 +86,32 @@ Trames OBD2 exclues de l'apprentissage en 11-bit **et** 29-bit (ISO 15765-4) :
 
 ### LED D3 — anode commune
 Logique inversée : `LOW = LED ON`, `HIGH = LED OFF`.  
-Pins par défaut : RA0 (rouge cathode), RA1 (vert cathode) — **à confirmer dans le schéma Protel avant flash**.  
-Un `#warning` de compilation rappelle la vérification.
+Pins PCB3071-4 confirmés : **RB5** (cathode rouge → R15 1K), **RB4** (cathode verte → R14 1K).
+
+### Signal W — Sortie vitesse (J2 broche 3)
+
+Compatible CANM8 CANNECT PULSE. Signal carré 12V pulsé via T5 (BC817 NPN) sur **RD4** → R11 4.7K.
+
+**Formule :** `freq_Hz = speed_kmh × SIGNAL_W_MODE × 1000 / 1609`  
+Calcul 100 % entier (uint32), zéro float.
+
+| Mode | Configuré via | Fréquence @ 50 km/h | Usage typ. |
+|------|--------------|---------------------|------------|
+| 1 Hz/MPH (défaut) | `SIGNAL_W_MODE_1HZ` | 31 Hz | Taximètres, chronotachygraphes |
+| 4 Hz/MPH | `SIGNAL_W_MODE_4HZ` | 124 Hz | Haute résolution |
+| 10 Hz/MPH | `SIGNAL_W_MODE_10HZ` | 310 Hz | Très haute résolution |
+
+Équivalences vitesse → fréquence **(mode 1 Hz/MPH)** :
+
+| Vitesse | Fréquence |
+|---------|-----------|
+| 30 km/h | 18 Hz |
+| 50 km/h | 31 Hz |
+| 90 km/h | 55 Hz |
+| 120 km/h | 74 Hz |
+| 160 km/h | 99 Hz |
+
+Configurable via `SIGNAL_W_MODE` dans `config.h`.
 
 ### Watchdog Timer
 Activé avec période ~2 s (`WDTPS=32768`). `CLRWDT()` appelé à chaque itération
@@ -103,7 +125,7 @@ Suite de tests host (gcc/clang, macOS/Linux) — aucune dépendance, pas de XC8 
 cd tests && make run
 ```
 
-### Résultats — 46 / 46 PASS ✅
+### Résultats — 59 / 59 PASS ✅
 
 | Suite | Tests | Couverture |
 |-------|------:|------------|
@@ -112,7 +134,8 @@ cd tests && make run
 | `test_eeprom` | 9 / 9 ✅ | CRC-8, round-trip encode/decode, magic byte, corruption |
 | `test_obd2` | 14 / 14 ✅ | Parsing PID 0x0D, IDs/DLC ignorés, timing `obd2_task` |
 | `test_learner` | 11 / 11 ✅ | Filtre OBD2, pass1 durée/variation, pass2 corrélation Pearson |
-| **Total** | **46 / 46** | |
+| `test_signal_w` | 13 / 13 ✅ | Formule 1Hz/MPH, demi-période, toggle LAT, clamps, stop/reprise |
+| **Total** | **59 / 59** | |
 
 ### Bugs firmware corrigés par les tests
 

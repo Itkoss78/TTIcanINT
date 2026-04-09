@@ -25,7 +25,10 @@ typedef struct { uint8_t TXREQ:1;  uint8_t _pad:7; } TXB0CON_t;
 typedef struct { uint8_t TRISA0:1; uint8_t TRISA1:1; uint8_t _pad:6; } TRISA_t;
 typedef struct { uint8_t LATA0:1;  uint8_t LATA1:1;  uint8_t _pad:6; } LATA_t;
 typedef struct { uint8_t TRISC6:1; uint8_t _pad:7; } TRISC_t;
-typedef struct { uint8_t TRISB3:1; uint8_t _pad:7; } TRISB_t;
+typedef struct { uint8_t _p0:3; uint8_t TRISB3:1; uint8_t TRISB4:1; uint8_t TRISB5:1; uint8_t _p6:2; } TRISB_t;
+typedef struct { uint8_t _p0:4; uint8_t LATB4:1;  uint8_t LATB5:1;  uint8_t _p6:2; } LATB_t;
+typedef struct { uint8_t _p0:4; uint8_t TRISD4:1; uint8_t _p5:3; } TRISD_t;
+typedef struct { uint8_t _p0:4; uint8_t LATD4:1;  uint8_t _p5:3; } LATD_t;
 
 /* ── Registres globaux ─────────────────────────────────────────────────────── */
 extern volatile INTCON_t  INTCONbits;
@@ -43,6 +46,9 @@ extern volatile TRISA_t   TRISAbits;
 extern volatile LATA_t    LATAbits;
 extern volatile TRISC_t   TRISCbits;
 extern volatile TRISB_t   TRISBbits;
+extern volatile LATB_t    LATBbits;
+extern volatile TRISD_t   TRISDbits;
+extern volatile LATD_t    LATDbits;
 
 extern volatile uint8_t  T0CON, TMR0H, TMR0L;
 extern volatile uint8_t  CANCON, CANSTAT;
