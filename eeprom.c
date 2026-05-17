@@ -1,5 +1,12 @@
 #include "eeprom.h"
 #include "config.h"
+/* Clear XC8 legacy PLIB macros that conflict with our function names */
+#ifdef eeprom_read
+#undef eeprom_read
+#endif
+#ifdef eeprom_write
+#undef eeprom_write
+#endif
 
 static uint8_t eeprom_read_byte(uint8_t addr) {
     EEADR  = addr;
@@ -32,7 +39,7 @@ static uint8_t compute_crc(uint8_t *buf, uint8_t len) {
     for (uint8_t i = 0; i < len; i++) {
         crc ^= buf[i];
         for (uint8_t b = 0; b < 8; b++) {
-            if (crc & 0x80) crc = (crc << 1) ^ 0x07;
+            if (crc & 0x80) crc = (uint8_t)((crc << 1) ^ 0x07u);
             else            crc <<= 1;
         }
     }

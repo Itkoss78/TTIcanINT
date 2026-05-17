@@ -207,7 +207,7 @@ static void init_pass2(void) {
         p->sum_x = p->sum_y = p->sum_xy = p->sum_x2 = p->sum_y2 = 0;
         p->n = 0;
         p->best_correlation = 0;
-        p->factor = 256; // 1:1 par défaut
+        p->factor = 255; /* 1:1 par défaut (255/256 ≈ 1.0) */
     }
 }
 

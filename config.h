@@ -12,14 +12,14 @@
 #include <stdbool.h>
 
 // ─── FUSES ────────────────────────────────────────────────────────────────────
-#pragma config FOSC     = HS        // Crystal haute vitesse (6MHz)
+#pragma config FOSC     = HS1       // Crystal haute vitesse 4-16MHz (6MHz)
 #pragma config PLLCFG   = ON        // PLL x4 activé → Fcy 24MHz
-#pragma config PRICLKEN = ON        // Clock primaire activée
 #pragma config FCMEN    = OFF
 #pragma config IESO     = OFF
+#pragma config XINST    = OFF       // Extended instruction set désactivé (XC8)
 #pragma config PWRTEN   = ON        // Power-up Timer ON (stabilité démarrage)
 #pragma config BOREN    = SBORDIS   // Brown-out Reset activé
-#pragma config BORV     = 190       // Seuil BOR 1.9V
+#pragma config BORV     = 2         // Seuil BOR 2.0V
 
 // Watchdog : activé, période ~2s (WDTPS=1:32768 avec LFINTOSC ~31kHz)
 // → Reset automatique si le firmware freeze
@@ -29,9 +29,8 @@
 // Dans main.c, CLRWDT() est appelé à chaque itération de la boucle principale
 // pour éviter un reset intempestif pendant les phases normales
 
-#pragma config MCLRE    = EXTMCLR   // MCLR pin activé (ICSP)
+#pragma config MCLRE    = ON        // MCLR pin activé (ICSP), RE3 désactivé
 #pragma config STVREN   = ON        // Stack overflow/underflow reset
-#pragma config LVP      = OFF       // Low-voltage programming désactivé
 #pragma config CP0      = OFF       // Code protection désactivée
 #pragma config CP1      = OFF
 #pragma config CPB      = OFF

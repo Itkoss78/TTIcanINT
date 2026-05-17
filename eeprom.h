@@ -13,6 +13,13 @@ typedef struct {
 } EepromData;
 
 void eeprom_init(void);
+/* Annule les macros XC8 legacy pic18.h qui entrent en conflit */
+#ifdef eeprom_read
+#undef eeprom_read
+#endif
+#ifdef eeprom_write
+#undef eeprom_write
+#endif
 void eeprom_read(EepromData *data);
 void eeprom_write(EepromData *data);
 void eeprom_clear(void);
