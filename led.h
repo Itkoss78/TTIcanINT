@@ -13,6 +13,7 @@ typedef enum {
 } LedPattern;
 
 void led_init(void);
+void led_startup_flash(void);   /* 5 clignotements orange au démarrage */
 void led_set_pattern(LedPattern pattern);
 void led_update(uint32_t tick_ms);
 

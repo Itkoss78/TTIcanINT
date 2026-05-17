@@ -18,6 +18,17 @@ static void set_color(uint8_t red, uint8_t green) {
     LED_GREEN_LAT = green ? LED_ON : LED_OFF;
 }
 
+void led_startup_flash(void) {
+    /* 5 clignotements orange (rouge+vert) pour confirmer le démarrage du firmware */
+    for (uint8_t i = 0; i < 5; i++) {
+        CLRWDT();
+        set_color(1, 1);   /* Orange ON */
+        __delay_ms(100);
+        set_color(0, 0);   /* OFF */
+        __delay_ms(100);
+    }
+}
+
 void led_set_pattern(LedPattern pattern) {
     current_pattern = pattern;
 }

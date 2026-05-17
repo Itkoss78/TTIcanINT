@@ -68,6 +68,7 @@ void system_init(void) {
 
 int main(void) {
     system_init();
+    led_startup_flash();   /* 5 clignotements orange : confirmation firmware actif */
 
     EepromData eep;
     VehicleConfig cfg;
